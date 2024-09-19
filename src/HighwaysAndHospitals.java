@@ -46,74 +46,52 @@ public class HighwaysAndHospitals {
         if (hospitalCost < highwayCost)
             return Long.valueOf(n) * hospitalCost;
 
-        // Array to hold all the visited cities with a value of 0 for not and 1 for visited.
-        int[] visited = new int[n + 1];
+        // Array to hold the root of each city and a zero if it's its own root
+        int[] roots = new int[n + 1];
         int currentNode;
-        int clusters = 0;
-        Queue<Integer> path = new LinkedList<>();
-        while (!checkVisited(visited)) {
-            clusters++;
-            for (int i = 1; i < visited.length; i++)
-                if (visited[i] == 0) {
-                    path.add(i);
-                    visited[i] = 1;
-                    break;
-                }
-            // Run BFS on the first element that's not visited
-            while (!path.isEmpty()) {
-                boolean found = false;
-                boolean foundSecond = false;
-                int count = 0;
-                int temp = 0;
-                Arrays.sort(cities, (a, b) -> Integer.compare(a[0], b[0]));
-                currentNode = path.remove();
-                visited[currentNode] = 1;
-                for (int i = 0; i < cities.length; i++) {
-                    if (cities[i][0] == currentNode) {
-                        count = i;
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    while (cities[count + temp][0] == currentNode) {
-                        // If the connection hasn't been visited
-                        if (visited[cities[count + temp][1]] == 0) {
-                            path.add(cities[count + temp][1]);
-                            visited[cities[count + temp][1]] = 1;
-                        }
-                        if (count + temp == cities.length - 1)
-                            break;
-                        temp++;
-                    }
-                }
-                Arrays.sort(cities, (a, b) -> Integer.compare(a[1], b[1]));
-                for (int i = 0; i < cities.length; i++) {
-                    if (cities[i][1] == currentNode) {
-                        count = i;
-                        foundSecond = true;
-                        break;
-                    }
-                }
-                if (foundSecond) {
-                    temp = 0;
-                    while (cities[count + temp][1] == currentNode) {
-                        // If the connection hasn't been visited
-                        if (visited[cities[count + temp][0]] == 0) {
-                            path.add(cities[count + temp][0]);
-                            visited[cities[count + temp][0]] = 1;
-                        }
-                        if (count + temp == cities.length - 1)
-                            break;
-                        temp++;
-                    }
-                }
+        int firstCity, firstCityCopy, secondCity, secondCityCopy, temp;
+        for (int i = 0; i < cities.length; i++) {
+            firstCity = cities[i][0];
+            secondCity = cities[i][1];
+            firstCityCopy = cities[i][0];
+            secondCityCopy = cities[i][1];
+            while (roots[firstCity] > 0) {
+                firstCity = roots[firstCity];
             }
+            while (roots[firstCityCopy] != firstCity && firstCity <= 0) {
+                temp = roots[firstCityCopy];
+                roots[firstCityCopy] = firstCity;
+                firstCityCopy = temp;
+            }
+            while (roots[secondCity] > 0) {
+                secondCity = roots[secondCity];
+            }
+            while (roots[secondCityCopy] != secondCity && secondCity <= 0) {
+                temp = roots[secondCityCopy];
+                roots[secondCityCopy] = secondCity;
+                secondCityCopy = temp;
+            }
+            if (firstCity == secondCity)
+               continue;
+            else if (roots[firstCity] <= roots[secondCity]) {
+                roots[firstCity] += roots[secondCity] - 1;
+                roots[secondCity] = firstCity;
+            }
+            else {
+                roots[secondCity] = roots[firstCity] - 1;
+                roots[firstCity] = secondCity;
+            }
+        }
+
+        int clusters = 0;
+        for (int i = 1; i < roots.length; i++) {
+            if (roots[i] <= 0)
+                clusters++;
         }
         // The current problem is that the system only takes into account the first connection
         // between two cities rather than the second one so if 4 connected to 6 and 5 to 6,
         // five is considered a new cluster as it's not connected to anything else in the 2nd
         // connection of an edge despite actually being connected to 6 which is connected to 4
-        return clusters * hospitalCost + ((n - clusters) * highwayCost);
+        return Long.valueOf(clusters) * hospitalCost + ((n - clusters) * highwayCost);
     }
 }
